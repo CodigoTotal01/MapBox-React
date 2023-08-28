@@ -6,7 +6,8 @@ interface MapContexProps {
     map?: Map,
 
     //Methods
-    setMap: (map: Map) => void
+    setMap: (map: Map) => void,
+    getRouterBetweenPoint: (start: [number, number], end: [number, number]) => Promise<void>;
 }
 //Informacion que ocupa almacenar
 export const MapContext = createContext({} as MapContexProps);
