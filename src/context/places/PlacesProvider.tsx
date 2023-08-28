@@ -3,15 +3,21 @@ import {PlacesContext} from "./PlacesContext.ts";
 import {useEffect, useReducer} from "react";
 import {placesReducer} from "./placesReducer.ts";
 import {getUserLocations} from "../../helpers/getUserLocations.ts";
+import {searchApi} from "../../apis";
+import {Feature, PlacesResponse} from "../../interfaces/places.ts";
 
 export interface PlaceState {
     isLoading: boolean;
-    userLocation ?: [number, number]
+    userLocation ?: [number, number],
+    isLoadingPlaces: boolean;
+    places: Feature[]
 }
 
 const INITIAL_STATE: PlaceState = {
     isLoading: true,
-    userLocation: undefined
+    userLocation: undefined,
+    isLoadingPlaces: false,
+    places: []
 }
 
 interface Props {
@@ -29,10 +35,33 @@ export const PlacesProvider = ({children}: Props) => {
     }, []);
 
 
+    const searchPlacesByTerm = async(query: string)  => {
+
+        if(query.length === 0)  {
+            dispatch({type: 'setPlaces', payload: []})
+            return [];
+        }
+        if(!state.userLocation) throw new Error("No hay ubicacion del usuario") ;
+
+        dispatch({type: 'setLoadingPlaces'});
+
+        const resp = await searchApi.get<PlacesResponse>(`${query}.json`, {
+            params: {
+                proximity: state.userLocation.join(',')
+            }
+        });
+
+        dispatch({type: 'setPlaces', payload: resp.data.features});
+
+        return resp.data.features[0];
+    }
+
+
     //Inicializar los valores del contex atravez del provider
     return (
         <PlacesContext.Provider value={{
-            ...state
+            ...state,
+            searchPlacesByTerm
         }}>
 
             {children}
